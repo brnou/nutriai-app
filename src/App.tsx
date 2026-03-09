@@ -101,7 +101,13 @@ export default function App() {
   const [view, setView] = useState<string>('splash');
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('nutriai_dark_mode');
-    return saved === 'true';
+    const isDark = saved === 'true';
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    return isDark;
   });
 
   useEffect(() => {
@@ -965,7 +971,73 @@ export default function App() {
     );
   };
 
-  const ProfileView = () => (
+  const ProfileView = () => {
+    const [editingName, setEditingName] = useState(false);
+    const [tempName, setTempName] = useState(state.profile.name);
+
+    const handleExportPDF = () => {
+      const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      const totalCalories = state.meals.reduce((acc, m) => acc + m.calories, 0);
+      const totalProtein = state.meals.reduce((acc, m) => acc + m.protein, 0);
+      const totalCarbs = state.meals.reduce((acc, m) => acc + m.carbs, 0);
+      const totalFats = state.meals.reduce((acc, m) => acc + m.fats, 0);
+
+      const html = `
+        <html>
+        <head>
+          <title>NutriAI Weekly Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 40px; color: #1d1d15; }
+            h1 { color: #aeaa4c; font-size: 28px; }
+            h2 { color: #aeaa4c; font-size: 18px; margin-top: 30px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th { background: #aeaa4c; color: white; padding: 10px; text-align: left; }
+            td { padding: 10px; border-bottom: 1px solid #eee; }
+            .summary { background: #f7f7f6; padding: 20px; border-radius: 10px; margin: 20px 0; }
+            .stat { display: inline-block; margin-right: 30px; }
+            .stat-value { font-size: 28px; font-weight: bold; color: #aeaa4c; }
+            .stat-label { font-size: 12px; color: #888; }
+          </style>
+        </head>
+        <body>
+          <h1>🥗 NutriAI Weekly Report</h1>
+          <p>Generated on ${today} for <strong>${state.profile.name}</strong></p>
+          <div class="summary">
+            <div class="stat"><div class="stat-value">${totalCalories}</div><div class="stat-label">Total Calories</div></div>
+            <div class="stat"><div class="stat-value">${totalProtein}g</div><div class="stat-label">Total Protein</div></div>
+            <div class="stat"><div class="stat-value">${totalCarbs}g</div><div class="stat-label">Total Carbs</div></div>
+            <div class="stat"><div class="stat-value">${totalFats}g</div><div class="stat-label">Total Fats</div></div>
+          </div>
+          <h2>Meal Log</h2>
+          <table>
+            <tr><th>Meal</th><th>Type</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fats</th><th>Time</th></tr>
+            ${state.meals.map(m => `<tr>
+              <td>${m.name}</td>
+              <td>${m.type}</td>
+              <td>${m.calories} kcal</td>
+              <td>${m.protein}g</td>
+              <td>${m.carbs}g</td>
+              <td>${m.fats}g</td>
+              <td>${new Date(m.timestamp).toLocaleString()}</td>
+            </tr>`).join('')}
+          </table>
+          <h2>Profile</h2>
+          <p>Daily Calorie Goal: <strong>${state.profile.dailyCalorieGoal} kcal</strong></p>
+          <p>Biological Age: <strong>${state.profile.biologicalAge} years</strong></p>
+          <p>Goal: <strong>${state.profile.goal}</strong></p>
+        </body>
+        </html>
+      `;
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'NutriAI-Report.html';
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    return (
     <div className="flex flex-col min-h-screen bg-background-light dark:bg-background-dark pb-32">
       <header className="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-primary/10 p-4">
         <div className="flex items-center justify-between max-w-md mx-auto w-full">
@@ -994,7 +1066,30 @@ export default function App() {
               <Camera className="size-4" />
             </button>
           </div>
-          <h2 className="text-3xl font-black tracking-tight">{state.profile.name}</h2>
+          {editingName ? (
+            <div className="flex items-center gap-2 mt-2">
+              <input
+                type="text"
+                value={tempName}
+                onChange={(e) => setTempName(e.target.value)}
+                className="text-xl font-black text-center border-b-2 border-primary outline-none bg-transparent"
+                autoFocus
+              />
+              <button
+                onClick={() => { updateProfile({ name: tempName }); setEditingName(false); }}
+                className="text-primary font-bold text-sm bg-primary/10 px-3 py-1 rounded-full"
+              >
+                Save
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 mt-2">
+              <h2 className="text-3xl font-black tracking-tight">{state.profile.name}</h2>
+              <button onClick={() => setEditingName(true)} className="text-slate-400 hover:text-primary transition-colors">
+                <Settings className="size-4" />
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-2 mt-2">
             <Verified className="size-4 text-primary fill-primary" />
             <p className="text-primary text-xs font-black uppercase tracking-widest">Premium Member</p>
@@ -1038,14 +1133,14 @@ export default function App() {
 
         <div className="space-y-4">
           <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Analytics & Export</h3>
-          <button className="w-full bg-primary text-white p-5 rounded-2xl shadow-xl shadow-primary/30 flex items-center justify-between group transition-all active:scale-[0.98]">
+          <button onClick={handleExportPDF} className="w-full bg-primary text-white p-5 rounded-2xl shadow-xl shadow-primary/30 flex items-center justify-between group transition-all active:scale-[0.98]">
             <div className="flex items-center gap-4">
               <div className="bg-white/20 p-2 rounded-xl">
                 <Download className="size-5" />
               </div>
               <div className="text-left">
                 <p className="font-bold text-sm">Export Weekly Report</p>
-                <p className="text-[10px] opacity-70 font-bold uppercase tracking-widest">PDF Format • Last 7 Days</p>
+                <p className="text-[10px] opacity-70 font-bold uppercase tracking-widest">HTML Format • All Data</p>
               </div>
             </div>
             <ChevronRight className="size-5 group-hover:translate-x-1 transition-transform" />
@@ -1082,7 +1177,8 @@ export default function App() {
       </main>
       <NavBar active="profile" />
     </div>
-  );
+    );
+  };
 
   const NavBar = ({ active }: { active: string }) => (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-primary/10 px-6 py-4 pb-8 flex justify-between items-center z-50">
