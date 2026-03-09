@@ -4,15 +4,47 @@
 
 @theme {
   --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
-  --color-primary: #aeaa4c;
+  --color-primary: var(--app-primary, #aeaa4c);
   --color-background-light: #f7f7f6;
   --color-background-dark: #1d1d15;
 }
 
+/* Dark mode via class on html element */
 @layer base {
   body {
-    @apply font-display bg-background-light text-slate-900 dark:bg-background-dark dark:text-slate-100;
+    @apply font-display;
+    background-color: #f7f7f6;
+    color: #0f172a;
     min-height: 100dvh;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  html.dark body {
+    background-color: #1d1d15;
+    color: #f1f5f9;
+  }
+
+  /* Force dark mode for all dark: classes */
+  html.dark .dark\:bg-background-dark {
+    background-color: #1d1d15 !important;
+  }
+  html.dark .dark\:text-slate-100 {
+    color: #f1f5f9 !important;
+  }
+  html.dark .dark\:bg-slate-900 {
+    background-color: #0f172a !important;
+  }
+  html.dark .dark\:bg-slate-800 {
+    background-color: #1e293b !important;
+  }
+  html.dark .dark\:border-slate-800 {
+    border-color: #1e293b !important;
+  }
+  html.dark .dark\:text-slate-200 {
+    color: #e2e8f0 !important;
+  }
+  html.dark .dark\:hover\:bg-slate-800:hover {
+    background-color: #1e293b !important;
   }
 }
 
