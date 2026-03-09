@@ -121,6 +121,26 @@ export default function App() {
 
   const toggleDarkMode = () => setDarkMode(!darkMode);
 
+  // Color themes
+  const themes = [
+    { name: 'Green', color: '#aeaa4c' },
+    { name: 'Blue', color: '#3b82f6' },
+    { name: 'Purple', color: '#8b5cf6' },
+    { name: 'Red', color: '#ef4444' },
+    { name: 'Orange', color: '#f97316' },
+    { name: 'Pink', color: '#ec4899' },
+    { name: 'Teal', color: '#14b8a6' },
+  ];
+
+  const [currentTheme, setCurrentTheme] = useState(() => {
+    return localStorage.getItem('nutriai_theme') || '#aeaa4c';
+  });
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--app-primary', currentTheme);
+    localStorage.setItem('nutriai_theme', currentTheme);
+  }, [currentTheme]);
+
   const [state, setState] = useState<AppState>(() => {
     const saved = localStorage.getItem('nutriai_state');
     if (saved) {
@@ -1169,9 +1189,10 @@ export default function App() {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Preferences</h3>
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-primary/10 overflow-hidden shadow-sm">
-            <div className="w-full flex items-center justify-between p-5">
+          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Appearance</h3>
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-primary/10 overflow-hidden shadow-sm p-5 space-y-4">
+            {/* Dark Mode Toggle */}
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="text-primary">
                   {darkMode ? <Moon className="size-5" /> : <Sun className="size-5" />}
@@ -1185,6 +1206,32 @@ export default function App() {
               >
                 <div className={`size-4 bg-white rounded-full shadow-sm transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-0'}`}></div>
               </button>
+            </div>
+
+            {/* Color Theme Picker */}
+            <div>
+              <p className="font-bold text-sm mb-3">App Color Theme</p>
+              <div className="flex flex-wrap gap-3">
+                {themes.map((theme) => (
+                  <button
+                    key={theme.color}
+                    onClick={() => setCurrentTheme(theme.color)}
+                    className="flex flex-col items-center gap-1"
+                    title={theme.name}
+                  >
+                    <div 
+                      className="size-10 rounded-full shadow-md border-4 transition-transform hover:scale-110"
+                      style={{ 
+                        backgroundColor: theme.color,
+                        borderColor: currentTheme === theme.color ? theme.color : 'transparent',
+                        outline: currentTheme === theme.color ? `3px solid ${theme.color}` : 'none',
+                        outlineOffset: '2px'
+                      }}
+                    />
+                    <span className="text-[9px] font-bold text-slate-400">{theme.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
