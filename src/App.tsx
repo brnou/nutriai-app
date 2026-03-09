@@ -168,6 +168,10 @@ export default function App() {
     setState(prev => ({ ...prev, meals: [meal, ...prev.meals] }));
   };
 
+  const deleteMeal = (id: string) => {
+    setState(prev => ({ ...prev, meals: prev.meals.filter(m => m.id !== id) }));
+  };
+
   const addWater = (amount: number) => {
     setState(prev => ({
       ...prev,
@@ -813,9 +817,17 @@ export default function App() {
                   <p className="font-bold text-sm truncate capitalize">{meal.type}: {meal.name}</p>
                   <p className="text-[10px] text-slate-400">{new Date(meal.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
-                <div className="text-right">
-                  <p className="font-black text-primary">{meal.calories}</p>
-                  <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">kcal</p>
+                <div className="text-right flex items-center gap-3">
+                  <div>
+                    <p className="font-black text-primary">{meal.calories}</p>
+                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">kcal</p>
+                  </div>
+                  <button 
+                    onClick={() => { if(confirm('Delete this meal?')) deleteMeal(meal.id); }}
+                    className="p-2 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-400 hover:bg-red-100 transition-colors"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
                 </div>
               </div>
             )) : (
@@ -870,9 +882,23 @@ export default function App() {
   const Hydration = () => {
     const today = new Date().setHours(0,0,0,0);
     const todayWater = state.water.filter(w => new Date(w.timestamp).setHours(0,0,0,0) === today);
-    const totalWater = todayWater.reduce((acc, w) => acc + w.amount, 0) / 1000; // L
-    const goalWater = 2.5;
+    const totalWater = todayWater.reduce((acc, w) => acc + w.amount, 0) / 1000;
+    const [goalWater, setGoalWater] = useState(() => {
+      const saved = localStorage.getItem('nutriai_water_goal');
+      return saved ? parseFloat(saved) : 2.5;
+    });
+    const [editingGoal, setEditingGoal] = useState(false);
+    const [tempGoal, setTempGoal] = useState(goalWater.toString());
     const progress = Math.min(100, (totalWater / goalWater) * 100);
+
+    const saveGoal = () => {
+      const val = parseFloat(tempGoal);
+      if (!isNaN(val) && val > 0) {
+        setGoalWater(val);
+        localStorage.setItem('nutriai_water_goal', val.toString());
+      }
+      setEditingGoal(false);
+    };
 
     return (
       <div className="flex flex-col min-h-screen bg-background-light dark:bg-background-dark pb-32">
@@ -958,10 +984,26 @@ export default function App() {
                   </div>
                   <div>
                     <p className="font-bold text-sm">Daily Goal</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">2.5 Liters (10 glasses)</p>
+                    {editingGoal ? (
+                      <div className="flex items-center gap-2 mt-1">
+                        <input
+                          type="number"
+                          value={tempGoal}
+                          onChange={(e) => setTempGoal(e.target.value)}
+                          className="w-16 border-b-2 border-primary outline-none text-xs font-bold bg-transparent"
+                          autoFocus
+                        />
+                        <span className="text-xs text-slate-400">Liters</span>
+                        <button onClick={saveGoal} className="text-primary font-bold text-xs bg-primary/10 px-2 py-1 rounded-full">Save</button>
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{goalWater} Liters ({Math.round(goalWater * 4)} glasses)</p>
+                    )}
                   </div>
                 </div>
-                <ChevronRight className="size-5 text-slate-300" />
+                <button onClick={() => setEditingGoal(true)}>
+                  <ChevronRight className="size-5 text-slate-300" />
+                </button>
               </div>
             </div>
           </section>
@@ -974,6 +1016,18 @@ export default function App() {
   const ProfileView = () => {
     const [editingName, setEditingName] = useState(false);
     const [tempName, setTempName] = useState(state.profile.name);
+    const photoInputRef = useRef<HTMLInputElement>(null);
+
+    const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          updateProfile({ profilePhoto: reader.result as string } as any);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
 
     const handleExportPDF = () => {
       const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -1056,15 +1110,19 @@ export default function App() {
           <div className="relative mb-6">
             <div className="size-32 rounded-full bg-primary/20 p-1 border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden">
               <img 
-                src="https://picsum.photos/seed/alex/300" 
+                src={(state.profile as any).profilePhoto || "https://picsum.photos/seed/alex/300"} 
                 alt="Profile" 
                 className="size-full rounded-full object-cover"
                 referrerPolicy="no-referrer"
               />
             </div>
-            <button className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg border-4 border-background-light dark:border-background-dark">
+            <button 
+              onClick={() => photoInputRef.current?.click()}
+              className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg border-4 border-background-light dark:border-background-dark"
+            >
               <Camera className="size-4" />
             </button>
+            <input type="file" accept="image/*" ref={photoInputRef} onChange={handlePhotoChange} className="hidden" />
           </div>
           {editingName ? (
             <div className="flex items-center gap-2 mt-2">
