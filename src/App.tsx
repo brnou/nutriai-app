@@ -796,11 +796,33 @@ export default function App() {
   };
 
   const HistoryView = () => {
-    const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    const consumedCalories = state.meals.reduce((acc, m) => acc + m.calories, 0);
-    const protein = state.meals.reduce((acc, m) => acc + m.protein, 0);
-    const carbs = state.meals.reduce((acc, m) => acc + m.carbs, 0);
-    const fats = state.meals.reduce((acc, m) => acc + m.fats, 0);
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [showCalendar, setShowCalendar] = useState(false);
+
+    const getMonthDays = (date: Date) => {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      return { firstDay, daysInMonth, year, month };
+    };
+
+    const { firstDay, daysInMonth, year, month } = getMonthDays(selectedDate);
+
+    const getMealsForDay = (day: number) => {
+      const d = new Date(year, month, day).setHours(0,0,0,0);
+      return state.meals.filter(m => new Date(m.timestamp).setHours(0,0,0,0) === d);
+    };
+
+    const selectedDay = selectedDate.getDate();
+    const filteredMeals = getMealsForDay(selectedDay);
+    const consumedCalories = filteredMeals.reduce((acc, m) => acc + m.calories, 0);
+    const protein = filteredMeals.reduce((acc, m) => acc + m.protein, 0);
+    const carbs = filteredMeals.reduce((acc, m) => acc + m.carbs, 0);
+    const fats = filteredMeals.reduce((acc, m) => acc + m.fats, 0);
+
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const dayNames = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
     return (
       <div className="flex flex-col min-h-screen bg-background-light dark:bg-background-dark pb-32">
@@ -810,20 +832,63 @@ export default function App() {
               <ArrowLeft className="size-5" />
             </button>
             <h1 className="text-lg font-black tracking-tight">Meal History</h1>
-            <button className="p-2 rounded-full hover:bg-primary/10 transition-colors">
+            <button onClick={() => setShowCalendar(!showCalendar)} className="p-2 rounded-full hover:bg-primary/10 transition-colors">
               <Calendar className="size-5 text-primary" />
             </button>
           </div>
         </header>
 
-        <main className="flex-1 p-6 space-y-8">
+        <main className="flex-1 p-6 space-y-6">
+          {/* Calendar */}
+          {showCalendar && (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-primary/10 shadow-xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <button onClick={() => setSelectedDate(new Date(year, month - 1, 1))} className="p-2 rounded-full hover:bg-primary/10">
+                  <ArrowLeft className="size-4 text-primary" />
+                </button>
+                <p className="font-black text-sm">{monthNames[month]} {year}</p>
+                <button onClick={() => setSelectedDate(new Date(year, month + 1, 1))} className="p-2 rounded-full hover:bg-primary/10">
+                  <ChevronRight className="size-4 text-primary" />
+                </button>
+              </div>
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {dayNames.map(d => <p key={d} className="text-center text-[10px] font-black text-slate-400">{d}</p>)}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {Array(firstDay).fill(null).map((_, i) => <div key={`empty-${i}`} />)}
+                {Array(daysInMonth).fill(null).map((_, i) => {
+                  const day = i + 1;
+                  const hasMeals = getMealsForDay(day).length > 0;
+                  const isSelected = day === selectedDay;
+                  const isToday = new Date().getDate() === day && new Date().getMonth() === month && new Date().getFullYear() === year;
+                  return (
+                    <button
+                      key={day}
+                      onClick={() => setSelectedDate(new Date(year, month, day))}
+                      className={`aspect-square rounded-xl flex flex-col items-center justify-center text-xs font-bold transition-all ${
+                        isSelected ? 'bg-primary text-white' :
+                        isToday ? 'border-2 border-primary text-primary' :
+                        'hover:bg-primary/10'
+                      }`}
+                    >
+                      {day}
+                      {hasMeals && !isSelected && <div className="size-1 rounded-full bg-primary mt-0.5" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-black tracking-tight">Logged Meals</h2>
-            <span className="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">{today}</span>
+            <h2 className="text-xl font-black tracking-tight">
+              {selectedDay === new Date().getDate() && month === new Date().getMonth() ? 'Today' : `${monthNames[month]} ${selectedDay}`}
+            </h2>
+            <span className="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">{filteredMeals.length} meals</span>
           </div>
 
           <div className="space-y-4">
-            {state.meals.length > 0 ? state.meals.map(meal => (
+            {filteredMeals.length > 0 ? filteredMeals.map(meal => (
               <div key={meal.id} className="flex items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-primary/5 shadow-sm">
                 <div className="size-16 rounded-xl bg-primary/10 overflow-hidden shrink-0">
                   <img 
@@ -853,29 +918,24 @@ export default function App() {
             )) : (
               <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
                 <Utensils className="size-12 text-slate-200 dark:text-slate-800 mx-auto mb-4" />
-                <p className="text-slate-400 text-sm font-medium">No meals logged yet.</p>
+                <p className="text-slate-400 text-sm font-medium">No meals logged for this day.</p>
               </div>
             )}
           </div>
 
-          {state.meals.length > 0 && (
+          {filteredMeals.length > 0 && (
             <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border-2 border-primary/10 shadow-xl space-y-6">
               <div className="flex items-center gap-2">
                 <BarChart3 className="size-5 text-primary" />
                 <h3 className="text-lg font-black tracking-tight">Nutrition Summary</h3>
               </div>
-              
               <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10">
-                <div className="flex justify-between items-center mb-2">
-                  <p className="text-[10px] font-black text-primary uppercase tracking-widest">Total Calories</p>
-                  <p className="text-xs font-bold text-slate-400">{Math.round((consumedCalories / state.profile.dailyCalorieGoal) * 100)}%</p>
-                </div>
+                <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">Total Calories</p>
                 <p className="text-4xl font-black tracking-tighter">{consumedCalories.toLocaleString()} <span className="text-sm font-bold text-slate-400">/ {state.profile.dailyCalorieGoal} kcal</span></p>
                 <div className="w-full h-2 bg-primary/10 rounded-full mt-4 overflow-hidden">
                   <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, (consumedCalories / state.profile.dailyCalorieGoal) * 100)}%` }}></div>
                 </div>
               </div>
-
               <div className="grid grid-cols-3 gap-4">
                 {[
                   { label: 'Protein', value: protein, goal: 150 },
@@ -1038,6 +1098,24 @@ export default function App() {
     const [tempName, setTempName] = useState(state.profile.name);
     const photoInputRef = useRef<HTMLInputElement>(null);
 
+    const motivationalPhrases = [
+      "Every healthy choice is a victory! 💪",
+      "Your body is your temple, nourish it! 🌿",
+      "Small steps lead to big results! 🚀",
+      "You are what you eat — eat well! 🥗",
+      "Progress, not perfection! ⭐",
+      "Fuel your body, fuel your dreams! 🔥",
+      "Consistency is the key to success! 🗝️",
+      "Healthy outside starts from the inside! 💚",
+    ];
+
+    const todayMotivation = motivationalPhrases[new Date().getDay() % motivationalPhrases.length];
+    const joinedDate = localStorage.getItem('nutriai_joined') || (() => {
+      const d = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      localStorage.setItem('nutriai_joined', d);
+      return d;
+    })();
+
     const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
@@ -1169,10 +1247,10 @@ export default function App() {
             </div>
           )}
           <div className="flex items-center gap-2 mt-2">
-            <Verified className="size-4 text-primary fill-primary" />
-            <p className="text-primary text-xs font-black uppercase tracking-widest">Premium Member</p>
+            <span className="text-lg">✨</span>
+            <p className="text-primary text-xs font-black">{todayMotivation}</p>
           </div>
-          <p className="text-slate-400 text-xs font-bold mt-2 uppercase tracking-widest">Goal: {state.profile.goal} • Joined Jan 2024</p>
+          <p className="text-slate-400 text-xs font-bold mt-2 uppercase tracking-widest">Goal: {state.profile.goal} • Joined {joinedDate}</p>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
