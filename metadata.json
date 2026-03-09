@@ -1,0 +1,7 @@
+{
+  "name": "NutriAI",
+  "description": "AI-powered nutrition and hydration tracker with food analysis and personalized meal planning.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
