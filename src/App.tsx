@@ -100,7 +100,7 @@ const calculateBiologicalAge = (profile: UserProfile): number => {
 export default function App() {
   const [view, setView] = useState<string>('splash');
   const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem('nutriai_dark_mode');
+    const saved = localStorage.getItem('nourish_dark_mode');
     const isDark = saved === 'true';
     if (isDark) {
       document.documentElement.classList.add('dark');
@@ -111,7 +111,7 @@ export default function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem('nutriai_dark_mode', darkMode.toString());
+    localStorage.setItem('nourish_dark_mode', darkMode.toString());
     if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -133,16 +133,16 @@ export default function App() {
   ];
 
   const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem('nutriai_theme') || '#aeaa4c';
+    return localStorage.getItem('nourish_theme') || '#aeaa4c';
   });
 
   useEffect(() => {
     document.documentElement.style.setProperty('--app-primary', currentTheme);
-    localStorage.setItem('nutriai_theme', currentTheme);
+    localStorage.setItem('nourish_theme', currentTheme);
   }, [currentTheme]);
 
   const [state, setState] = useState<AppState>(() => {
-    const saved = localStorage.getItem('nutriai_state');
+    const saved = localStorage.getItem('nourish_state');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -158,7 +158,7 @@ export default function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem('nutriai_state', JSON.stringify(state));
+    localStorage.setItem('nourish_state', JSON.stringify(state));
   }, [state]);
 
   useEffect(() => {
@@ -220,8 +220,20 @@ export default function App() {
         transition={{ duration: 0.5 }}
         className="flex flex-col items-center"
       >
-        <Utensils className="size-20 mb-4" />
-        <h1 className="text-4xl font-black tracking-tighter">NutriAI</h1>
+        <div className="size-24 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="96" height="96">
+            <circle cx="50" cy="50" r="48" fill="rgba(255,255,255,0.15)"/>
+            <path d="M50 20 C65 20, 78 33, 78 50 C78 67, 65 80, 50 80 C35 80, 22 67, 22 50 C22 33, 35 20, 50 20Z" fill="none" stroke="white" strokeWidth="2.5" opacity="0.4"/>
+            <line x1="38" y1="28" x2="38" y2="72" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+            <line x1="34" y1="28" x2="34" y2="42" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            <line x1="38" y1="28" x2="38" y2="42" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            <line x1="42" y1="28" x2="42" y2="42" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            <ellipse cx="62" cy="35" rx="6" ry="9" fill="none" stroke="white" strokeWidth="2.5"/>
+            <line x1="62" y1="44" x2="62" y2="72" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+            <circle cx="50" cy="50" r="3" fill="white" opacity="0.8"/>
+          </svg>
+        </div>
+        <h1 className="text-4xl font-black tracking-tighter">Nourish</h1>
         <p className="text-white/80 font-medium">Your Intelligent Nutritionist</p>
       </motion.div>
     </div>
@@ -230,7 +242,7 @@ export default function App() {
   const Onboarding1 = () => (
     <div className="flex flex-col h-screen p-6 bg-background-light dark:bg-background-dark">
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-lg font-bold">NutriAI Onboarding</h2>
+        <h2 className="text-lg font-bold">Nourish Onboarding</h2>
         <span className="text-xs font-bold text-slate-400">Step 1 of 4</span>
       </div>
       <div className="flex-1">
@@ -662,7 +674,7 @@ export default function App() {
             <button onClick={() => setView('dashboard')} className="p-2 rounded-full hover:bg-primary/10 transition-colors">
               <ArrowLeft className="size-5" />
             </button>
-            <h1 className="text-lg font-black tracking-tight">NutriAI Analysis</h1>
+            <h1 className="text-lg font-black tracking-tight">Nourish Analysis</h1>
             <div className="size-10" />
           </div>
         </header>
@@ -964,7 +976,7 @@ export default function App() {
     const todayWater = state.water.filter(w => new Date(w.timestamp).setHours(0,0,0,0) === today);
     const totalWater = todayWater.reduce((acc, w) => acc + w.amount, 0) / 1000;
     const [goalWater, setGoalWater] = useState(() => {
-      const saved = localStorage.getItem('nutriai_water_goal');
+      const saved = localStorage.getItem('nourish_water_goal');
       return saved ? parseFloat(saved) : 2.5;
     });
     const [editingGoal, setEditingGoal] = useState(false);
@@ -975,7 +987,7 @@ export default function App() {
       const val = parseFloat(tempGoal);
       if (!isNaN(val) && val > 0) {
         setGoalWater(val);
-        localStorage.setItem('nutriai_water_goal', val.toString());
+        localStorage.setItem('nourish_water_goal', val.toString());
       }
       setEditingGoal(false);
     };
@@ -1110,9 +1122,9 @@ export default function App() {
     ];
 
     const todayMotivation = motivationalPhrases[new Date().getDay() % motivationalPhrases.length];
-    const joinedDate = localStorage.getItem('nutriai_joined') || (() => {
+    const joinedDate = localStorage.getItem('nourish_joined') || (() => {
       const d = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      localStorage.setItem('nutriai_joined', d);
+      localStorage.setItem('nourish_joined', d);
       return d;
     })();
 
@@ -1137,7 +1149,7 @@ export default function App() {
       const html = `
         <html>
         <head>
-          <title>NutriAI Weekly Report</title>
+          <title>Nourish Weekly Report</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 40px; color: #1d1d15; }
             h1 { color: #aeaa4c; font-size: 28px; }
@@ -1152,7 +1164,7 @@ export default function App() {
           </style>
         </head>
         <body>
-          <h1>🥗 NutriAI Weekly Report</h1>
+          <h1>🥗 Nourish Weekly Report</h1>
           <p>Generated on ${today} for <strong>${state.profile.name}</strong></p>
           <div class="summary">
             <div class="stat"><div class="stat-value">${totalCalories}</div><div class="stat-label">Total Calories</div></div>
@@ -1184,7 +1196,7 @@ export default function App() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'NutriAI-Report.html';
+      a.download = 'Nourish-Report.html';
       a.click();
       URL.revokeObjectURL(url);
     };
@@ -1393,7 +1405,8 @@ export default function App() {
   );
 
   return (
-    <div className="max-w-md mx-auto min-h-screen shadow-2xl overflow-hidden relative">
+    <div className="max-w-lg mx-auto min-h-screen shadow-2xl overflow-hidden relative md:my-0 md:shadow-none md:max-w-full md:flex">
+      <div className="w-full md:max-w-lg md:mx-auto md:shadow-2xl md:overflow-hidden md:relative">
       <AnimatePresence mode="wait">
         <motion.div
           key={view}
@@ -1414,6 +1427,7 @@ export default function App() {
           {view === 'profile' && <ProfileView />}
         </motion.div>
       </AnimatePresence>
+      </div>
     </div>
   );
 }
