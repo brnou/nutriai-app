@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.netlify.nutriai_app.twa",
+        "sha256_cert_fingerprints": ["80:AB:D5:84:2E:5C:F3:A5:D0:B6:96:3C:58:7D:81:6B:B6:F2:A3:59:CE:6C:6D:7D:10:2D:F4:74:09:14:9C:D1"]
+      }
+    }]
